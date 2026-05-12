@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Next Stage クイズ</title>
+
+<style>
+
+body{
+    font-family:sans-serif;
+    background:#eef3ff;
+    margin:0;
+    padding:20px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    background:white;
+    padding:25px;
+    border-radius:20px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.15);
+}
+
+h1{
+    text-align:center;
+    color:#304ffe;
+}
+
+.menu{
+    display:grid;
+    gap:15px;
+    margin-top:30px;
+}
+
+button{
+    padding:16px;
+    border:none;
+    border-radius:12px;
+    background:#dfe7ff;
+    font-size:1rem;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+button:hover{
+    background:#c5d4ff;
+}
+
+.question{
+    font-size:1.2rem;
+    line-height:1.8;
+    margin-top:20px;
+}
+
+.choices{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:25px;
+}
+
+.result{
+    margin-top:20px;
+    text-align:center;
+    font-size:1.2rem;
+    font-weight:bold;
+}
+
+.hidden{
+    display:none;
+}
+
+.hint{
+    margin-top:15px;
+    color:#555;
+    line-height:1.7;
+}
+
+.topButtons{
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+}
+
+.score{
+    text-align:right;
+    color:#555;
+}
+
+@media(max-width:700px){
+
+    .choices{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <div id="menuScreen">
+
+        <h1>Next Stage クイズ</h1>
+
+        <div class="menu">
+
+            <button onclick="startGame('first')">
+                ① 1〜6番モード
+            </button>
+
+            <button onclick="startGame('second')">
+                ② 7〜13番モード
+            </button>
+
+            <button onclick="startGame('all')">
+                ③ 1〜13番全部モード
+            </button>
+
+        </div>
+
+    </div>
+
+    <div id="gameScreen" class="hidden">
+
+        <div class="score">
+            スコア: <span id="score">0</span>
+        </div>
+
+        <div class="question" id="question"></div>
+
+        <div id="hint" class="hint hidden"></div>
+
+        <div class="topButtons">
+
+            <button onclick="showHint()">
+                ヒントを見る
+            </button>
+
+            <button onclick="nextQuestion()">
+                次の問題
+            </button>
+
+        </div>
+
+        <div class="choices" id="choices"></div>
+
+        <div class="result" id="result"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+const allQuestions = [
+
+{
+id:1,
+question:"Glen and Wilma usually (　　　) their washing on weekends.",
+choices:[
+"do",
+"are done",
+"have done",
+"have been doing"
+],
+answer:0,
+jp:"グレンとウィルマはたいてい週末に洗濯をする。"
+},
+
+{
+id:2,
+question:"I (　　　) for a trading company in Tokyo at this time next year.",
+choices:[
+"will be working",
+"was working",
+"have worked",
+"have been working"
+],
+answer:0,
+jp:"私は来年の今頃、東京の商社で働いているだろう。"
+},
+
+{
+id:3,
+question:"Listen! I (　　　) a funny noise outside.",
+choices:[
+"am hearing",
+"hear",
+"had been hearing",
+"had heard"
+],
+answer:1,
+jp:"聞いて！外で変な音が聞こえる。"
+},
+
+{
+id:4,
+question:"“Are John and Mary still living in New York?” “No, they (　　　) to Dallas.”",
+choices:[
+"are just moved",
+"have just moved",
+"will just move",
+"had just moved"
+],
+answer:1,
+jp:"「ジョンとメアリーはまだニューヨークに住んでるの？」「いや、ちょうどダラスに引っ越したよ。」"
+},
+
+{
+id:5,
+question:"Next Sunday he (　　　) in Kobe for three years.",
+choices:[
+"has stayed",
+"will have stayed",
+"will stay",
+"stays"
+],
+answer:1,
+jp:"来週の日曜日で、彼は神戸に3年間住んだことになる。"
+},
+
+{
+id:6,
+question:"When I went back to the town I (　　　) eight years before, everything was different.",
+choices:[
+"was leaving",
+"was left",
+"have left",
+"had left"
+],
+answer:3,
+jp:"8年前に去った町へ戻ると、すべてが変わっていた。"
+},
+
+{
+id:7,
+question:"We (　　　) for nearly thirty minutes when the train arrived.",
+choices:[
+"have waited",
+"will have waited",
+"have been waiting",
+"had been waiting"
+],
+answer:3,
+jp:"列車が到着した時、私たちは30分近く待っていた。"
+},
+
+{
+id:8,
+question:"I'll be at home watching TV until (　　　).",
+choices:[
+"you be back",
+"you come back",
+"you will be back",
+"you will have been back"
+],
+answer:1,
+jp:"あなたが帰ってくるまで、私は家でテレビを見ているよ。"
+},
+
+{
+id:9,
+question:"We will go to the open market tomorrow if the weather (　　　) nice.",
+choices:[
+"will have been",
+"is",
+"were",
+"had been"
+],
+answer:1,
+jp:"もし天気が良ければ、明日青空市場へ行くつもりだ。"
+},
+
+{
+id:10,
+question:"She is not sure if he (　　　) to today's welcome party for the overseas students.",
+choices:[
+"comes",
+"had come",
+"will come",
+"would come"
+],
+answer:2,
+jp:"彼女は彼が今日の留学生歓迎会に来るかどうか確信していない。"
+},
+
+{
+id:11,
+question:"“This temple is beautiful. How old is it?” “It (　　　) in 1343.”",
+choices:[
+"was built",
+"built",
+"was building",
+"build"
+],
+answer:0,
+jp:"「この寺は美しいね。何年前なの？」「1343年に建てられたんだ。」"
+},
+
+{
+id:12,
+question:"I have to find a policeman as soon as possible because my bag (　　　).",
+choices:[
+"has stolen",
+"was being stolen",
+"has been stealing",
+"has been stolen"
+],
+answer:3,
+jp:"バッグが盗まれたので、できるだけ早く警察官を探さないといけない。"
+},
+
+{
+id:13,
+question:"On his way home, Taro was (　　　) a stranger.",
+choices:[
+"spoken at",
+"spoken by",
+"spoken to by",
+"spoken with by"
+],
+answer:2,
+jp:"帰宅途中、太郎は見知らぬ人に話しかけられた。"
+}
+
+];
+
+let currentQuestions = [];
+let currentQuestion;
+let score = 0;
+
+function startGame(mode){
+
+    document.getElementById("menuScreen").classList.add("hidden");
+    document.getElementById("gameScreen").classList.remove("hidden");
+
+    score = 0;
+    document.getElementById("score").textContent = score;
+
+    if(mode === "first"){
+
+        currentQuestions = allQuestions.filter(q => q.id <= 6);
+
+    }else if(mode === "second"){
+
+        currentQuestions = allQuestions.filter(q => q.id >= 7);
+
+    }else{
+
+        currentQuestions = allQuestions;
+
+    }
+
+    nextQuestion();
+
+}
+
+function nextQuestion(){
+
+    document.getElementById("result").textContent = "";
+
+    document.getElementById("hint").classList.add("hidden");
+
+    currentQuestion =
+        currentQuestions[
+            Math.floor(Math.random() * currentQuestions.length)
+        ];
+
+    document.getElementById("question").textContent =
+        currentQuestion.question;
+
+    const choicesDiv =
+        document.getElementById("choices");
+
+    choicesDiv.innerHTML = "";
+
+    const labels = ["①","②","③","④"];
+
+    currentQuestion.choices.forEach((choice,index)=>{
+
+        const btn = document.createElement("button");
+
+        btn.textContent =
+            labels[index] + " " + choice;
+
+        btn.onclick = () => checkAnswer(index);
+
+        choicesDiv.appendChild(btn);
+
+    });
+
+}
+
+function checkAnswer(index){
+
+    const result =
+        document.getElementById("result");
+
+    if(index === currentQuestion.answer){
+
+        result.textContent = "⭕ 正解！";
+        result.style.color = "green";
+
+        score++;
+
+        document.getElementById("score").textContent =
+            score;
+
+    }else{
+
+        result.textContent =
+            "❌ 不正解！ 正解は " +
+            ["①","②","③","④"][currentQuestion.answer];
+
+        result.style.color = "red";
+
+    }
+
+}
+
+function showHint(){
+
+    const hint =
+        document.getElementById("hint");
+
+    hint.textContent =
+        currentQuestion.jp;
+
+    hint.classList.remove("hidden");
+
+}
+
+</script>
+
+</body>
+</html>
